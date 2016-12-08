@@ -20,7 +20,7 @@ $messenger = $app['controllers_factory'];
 $messenger->get('/', function() use($app) {
   $app['monolog']->addDebug('logging output from messenger controller.');
   return $app['twig']->render('index.twig');
-})
+});
 
 $app->mount('/', $messenger)
 $app->get('/', function() use($app) {
