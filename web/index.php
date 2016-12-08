@@ -15,11 +15,17 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
     'twig.path' => __DIR__.'/views',
 ));
 
-// Our web handlers
+// Messenger handlers
+$messenger = $app['controllers_factory'];
+$messenger->get('/', function() use($app) {
+  $app['monolog']->addDebug('logging output from messenger controller.');
+  return $app['twig']->render('index.twig');
+})
 
-$app->get('/', function() use($app) {
+  $app->mount('/', $messenger)
+/*$app->get('/', function() use($app) {
   $app['monolog']->addDebug('logging output.');
   return $app['twig']->render('index.twig');
-});
+});*/
 
 $app->run();

@@ -8,7 +8,7 @@
     "monolog/monolog": "^1.4",
     "twig/twig": "^1.8",
     "symfony/twig-bridge": "^2",
-    "videlalvaro/php-amqplib": "2.2.*",
+    "php-amqplib/php-amqplib": "2.2.*",
     "ext-bcmath": "*"
   },
   "require-dev": {
