@@ -57,6 +57,8 @@ $messenger->get('/', function() use($app) {
   //Disconnect from the queue
   $channel->close();
   $conn->close();
+  
+  return new Response('Listening...', 201);
 });
 
 $messenger->get('/send/test/{message}', function($message) use($app) {
@@ -81,6 +83,8 @@ $messenger->get('/send/test/{message}', function($message) use($app) {
   //Disconnect from the queue
   $channel->close();
   $conn->close();
+  
+  return new Response('Message sent!', 201);
 });
 
 $messenger->post('/send', function(Request $request) use($app) {
