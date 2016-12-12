@@ -9,7 +9,7 @@ $app['debug'] = true;
 define('AMQP_DEBUG', true);
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
-$url = parse_url(getenv('CLOUDAMQP_URL'));
+
 
 //Symphony
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +28,7 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 // Messenger handlers
 $messenger = $app['controllers_factory'];
 $messenger->get('/', function() use($app) {
+  $url = parse_url(getenv('CLOUDAMQP_URL'));
   $app['monolog']->addDebug('fetching message.');
   
   //Connect to the queue
@@ -59,6 +60,7 @@ $messenger->get('/', function() use($app) {
 });
 
 $messenger->get('/send/test/{message}', function($message) use($app) {
+  $url = parse_url(getenv('CLOUDAMQP_URL'));
   $app['monolog']->addDebug('sending message.');
   
   //Connect to the queue
@@ -82,6 +84,7 @@ $messenger->get('/send/test/{message}', function($message) use($app) {
 });
 
 $messenger->post('/send', function(Request $request) use($app) {
+  $url = parse_url(getenv('CLOUDAMQP_URL'));
   $app['monolog']->addDebug('sending message.');
   
   //Connect to the queue
