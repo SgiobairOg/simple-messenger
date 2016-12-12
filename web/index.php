@@ -5,11 +5,6 @@ require('../vendor/autoload.php');
 $app = new Silex\Application();
 $app['debug'] = true;
 
-//Configure details of the RabbitMQ service
-define('AMQP_DEBUG', true);
-use PhpAmqpLib\Connection\AMQPConnection;
-use PhpAmqpLib\Message\AMQPMessage;
-
 
 //Symphony
 use Symfony\Component\HttpFoundation\Request;
@@ -27,41 +22,47 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 
 // Messenger handlers
 $messenger = $app['controllers_factory'];
-$messenger->get('/', function() use($app) {
+
+//Test Emitter
+$messenger->get('/emit/test', function() use($app) {
+  
+  // Log
+  $app['monolog']->addDebug('Sending message.');
+  
+  //Configure details of the RabbitMQ service
+  define('AMQP_DEBUG', true);
+  use PhpAmqpLib\Connection\AMQPConnection;
+  use PhpAmqpLib\Message\AMQPMessage;
+  
+  //Get cloudAMQP url from server
   $url = parse_url(getenv('CLOUDAMQP_URL'));
-  $app['monolog']->addDebug('fetching message.');
+  
   
   //Connect to the queue
   $conn = new AMQPConnection($url['host'], 5672, $url['user'], $url['pass'], substr($url['path'], 1));
   $channel = $conn->channel();
 
-  $exchange = 'amq.direct';
-  $queue = 'basic_get_queue';
-  $channel->queue_declare($queue, false, true, false, false);
-  $channel->exchange_declare($exchange, 'direct', true, true, false);
-  $channel->queue_bind($queue, $exchange);
+  //Declare exchange
+  $exchange = 'amq.fanout';
+  $channel->exchange_declare($exchange, 'fanout', false, false, false);
   
-  $app['monolog']->addDebug('Waiting for messages');
+  $data = implode( ' ', array_slice($argv,1));
+  if(empty($data)) $data = "info: Hello World!";
+  $msg = new AMQPMessage($data);
   
-  $deliver = function($msg) {
-    echo ' [X] ', $msg->body, '\n';
-  };
+  $channel->basic_publish($msg, $exchange);
   
-  //Retrive message from queue
-  $channel->basic_consume($queue, '', false, true, false, false, $deliver);
-  
-  while(count($channel->callbacks)) {
-    $channel->wait();
-  }
+  echo " [X] Sent: ", $data, "\n";
   
   //Disconnect from the queue
   $channel->close();
   $conn->close();
   
-  return new Response('Listening...', 201);
+  return new Response('Message Sent!', 201);
 });
 
-$messenger->get('/send/test/{message}', function($message) use($app) {
+//Test consumer
+$messenger->get('/consume/test', function() use($app) {
   $url = parse_url(getenv('CLOUDAMQP_URL'));
   $app['monolog']->addDebug('sending message.');
   
