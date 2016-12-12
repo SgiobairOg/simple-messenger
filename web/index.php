@@ -9,6 +9,8 @@ $app['debug'] = true;
 define('AMQP_DEBUG', true);
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+
+//Gt cloudAMQP Url from the server
 $url = parse_url(getenv('CLOUDAMQP_URL'));
 
 //Symphony
@@ -30,9 +32,9 @@ $messenger = $app['controllers_factory'];
 $messenger->get('/emit/test', function() use($app) {
   $app['monolog']->addDebug('fetching message.');
   
-  echo 'Emit test';
+  echo $url['host'];
   
-  return new Response('Test complete', 201);
+  return new Response('Emit test complete', 201);
 });
 
 $messenger->get('/consume/test', function($message) use($app) {
@@ -40,7 +42,7 @@ $messenger->get('/consume/test', function($message) use($app) {
   
   echo 'Consume test';
   
-  return new Response('Test complete', 201);
+  return new Response('Consume test complete', 201);
 });
 
 $app->mount('/messenger', $messenger);
