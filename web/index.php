@@ -32,7 +32,7 @@ $messenger->get('/emit/test', function() use($app) {
   
   echo 'Emit test';
   
-  return;
+  return new Response('Test complete', 201);
 });
 
 $messenger->get('/consume/test', function($message) use($app) {
@@ -40,7 +40,7 @@ $messenger->get('/consume/test', function($message) use($app) {
   
   echo 'Consume test';
   
-  return;
+  return new Response('Test complete', 201);
 });
 
 $app->mount('/messenger', $messenger);
