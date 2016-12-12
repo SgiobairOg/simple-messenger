@@ -63,29 +63,45 @@ $messenger->get('/emit/test', function() use($app) {
 
 //Test consumer
 $messenger->get('/consume/test', function() use($app) {
+  $app['monolog']->addDebug('fetching message.');
+  
+  //Configure details of the RabbitMQ service
+  define('AMQP_DEBUG', true);
+  use PhpAmqpLib\Connection\AMQPConnection;
+  use PhpAmqpLib\Message\AMQPMessage;
+  
+  //Get cloudAMQP url from server
   $url = parse_url(getenv('CLOUDAMQP_URL'));
-  $app['monolog']->addDebug('sending message.');
+  
   
   //Connect to the queue
   $conn = new AMQPConnection($url['host'], 5672, $url['user'], $url['pass'], substr($url['path'], 1));
   $channel = $conn->channel();
-
-  $exchange = 'amq.direct';
-  $queue = 'basic_get_queue';
-  $channel->queue_declare($queue, false, true, false, false);
-  $channel->exchange_declare($exchange, 'direct', true, true, false);
-  $channel->queue_bind($queue, $exchange);
   
-  //Send message to the queue
-  $msg_body = $message;
-  $msg = new AMQPMessage($msg_body, array('content_type' => 'text/plain', 'delivery_mode' => 2));
-  $channel->basic_publish($msg, $exchange);
+  //Declare exchange
+  $exchange = 'amq.fanout';
+  $channel->exchange_declare($exchange, 'fanout', false, false, false);
   
-  //Disconnect from the queue
+  list($queue_name, ,) = $channel->queue_declare("", false, false, true, false);
+  
+  $channel->queue_bind($queue_name, $exchange);
+  
+  echo '  [X] Waiting for logs.', '\n';
+  
+  $callback = function( $message ) {
+    echo '    [X] ', $message->body, '\n';
+  };
+  
+  $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
+  
+  while(count($channel->callbacks)) {
+    $channel->wait();
+  }
+  
   $channel->close();
-  $conn->close();
+  $connection->close();
   
-  return new Response('Message sent!', 201);
+  return new Response('Listening...', 201);
 });
 
 $messenger->post('/send', function(Request $request) use($app) {
